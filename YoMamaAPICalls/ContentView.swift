@@ -25,6 +25,7 @@ struct ContentView: View {
     }
     let arrCategories =
         [
+            Categories(name: "All"),
             Categories(name: "Bald"),
             Categories(name: "Fat"),
             Categories(name: "Hairy"),
@@ -43,41 +44,51 @@ struct ContentView: View {
     
     var body: some View {
         
-        HStack {
-            Button {
-                isDarkModeOn.toggle()
-            } label: {
-                let image = isDarkModeOn ? "lightbulb" : "lightbulb.fill"
-                Image(systemName: image)
-            }
-            .padding(.leading, 15)
-            .padding(.trailing, 15)
-            Button {
-                isSiriOn.toggle()
-                if isSiriOn == false
-                {
-                    jokeReader.stopReading()
+        ZStack {
+             HStack {
+                Button {
+                    isDarkModeOn.toggle()
+                } label: {
+                    let image = isDarkModeOn ? "lightbulb" : "lightbulb.fill"
+                    Image(systemName: image)
                 }
-            } label: {
-                let image = isSiriOn ? "waveform.circle.fill" : "waveform.circle"
-                Image(systemName: image)
+                .padding(.leading, 10)
+                 Spacer()
             }
-            Spacer()
-            Text("Yo Mama Jokes")
-                .font(.title)
-                .bold()
-            Spacer()
+            HStack {
+                Button {
+                    isSiriOn.toggle()
+                    if isSiriOn == false
+                    {
+                        jokeReader.stopReading()
+                    }
+                } label: {
+                    let image = isSiriOn ? "waveform.circle.fill" : "waveform.circle"
+                    Image(systemName: image)
+                }
+                .padding(.leading, 40)
+                Spacer()
+            }
+            HStack {
+                Text("Yo Mama Jokes")
+                    .font(.title)
+                    .bold()
+            }
         }
         Divider()
         HStack {
             Text("Category:")
                 .padding(.trailing, -80)
             Spacer()
-            Picker("Select Profile", selection: $selectedCategory) {
+            Picker("Category", selection: $selectedCategory) {
                 ForEach(arrCategories.indices, id:\.self) { index in
                     let foundCategory = arrCategories[index]
                     Text((foundCategory.name))
                         .tag(index)
+                    if index == 0 {
+                        Divider()
+                            .overlay(Color.blue)
+                    }
                 }
             }
             .pickerStyle(.menu)
@@ -104,7 +115,15 @@ struct ContentView: View {
             Button {
                 Task {
                     jokeReader.stopReading()
-                    let (data, _) = try await URLSession.shared.data(from: URL(string:"https://www.yomama-jokes.com/api/v1/jokes/\(arrCategories[selectedCategory].name)/random/")!)
+                    
+                    var urlText = ""
+                    if arrCategories[selectedCategory].name == "All" {
+                        urlText = "https://www.yomama-jokes.com/api/v1/jokes/random/"
+                    } else {
+                        urlText = "https://www.yomama-jokes.com/api/v1/jokes/\(arrCategories[selectedCategory].name)/random/"
+                    }
+                    
+                    let (data, _) = try await URLSession.shared.data(from: URL(string:urlText)!)
                     let decodedResponse = try? JSONDecoder().decode(user.self, from: data)
                     joke = decodedResponse?.joke ?? ""
                     category = decodedResponse?.category ?? ""
